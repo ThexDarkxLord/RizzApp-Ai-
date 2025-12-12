@@ -35,4 +35,11 @@ Both versions are clean, beginner-friendly, and easy to customize.
   - or `easyocr`
 - Simple command-line interface
 
-Example:
+
+---
+
+## 🖤 Made by **The Dark Lord**
+
+Crafted with creativity, chaos, and a little bit of rizz.  
+If you enjoyed this project, **follow for more** — bigger ideas are coming.
+
