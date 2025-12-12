@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RizzApp Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .chat-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .user {
+      background: #d0f0ff;
+      text-align: right;
+    }
+    .bot {
+      background: #f1f1f1;
+      text-align: left;
+    }
+    .error {
+      background: #ffe0e0;
+      color: #a00;
+      text-align: center;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    input[type="text"], input[type="file"] {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px;
+      background: #0078D7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 style="text-align:center; color:white;">RizzApp Chat</h2>
+    <div class="chat-box" id="chatBox"></div>
+    <form id="chatForm">
+      <input type="text" id="textInput" placeholder="Type your message...">
+      <input type="file" id="imageInput" accept="image/*">
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chatBox");
+    const form = document.getElementById("chatForm");
+
+    async function rizzer(text) {
+      try {
+        const api = `https://dev-loopgpt.pantheonsite.io/wp-admin/js/RizzApp/rizz.php?text=${encodeURIComponent(text)}`;
+        const response = await fetch(api);
+        if (!response.ok) throw new Error(`RizzApp error: ${response.status}`);
+        return await response.text();
+      } catch (error) {
+        return `❌ Failed to get RizzApp response: ${error.message}`;
+      }
+    }
+
+    async function extractTextFromImage(file) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("apikey", "d38b8514b288957"); // Replace with your own key
+        formData.append("language", "eng");
+
+        const response = await fetch("https://api.ocr.space/parse/image", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+        if (data.IsErroredOnProcessing) {
+          throw new Error(data.ErrorMessage[0]);
+        }
+        return data.ParsedResults[0].ParsedText;
+      } catch (error) {
+        return `❌ Failed to extract text: ${error.message}`;
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = document.getElementById("textInput").value.trim();
+      const image = document.getElementById("imageInput").files[0];
+
+      let userMessage = "";
+      let rizzResponse = "";
+
+      if (text) {
+        userMessage = text;
+        chatBox.innerHTML += `<div class="message user"><strong>You:</strong> ${userMessage}</div>`;
+        rizzResponse = await rizzer(text);
+        chatBox.innerHTML += `<div class="message bot"><strong>RizzApp:</strong> ${rizzResponse}</div>`;
+      } else if (image) {
+        userMessage = "📷 Image uploaded";
+        chatBox.innerHTML += `<div class="message user"><strong>You:</strong> ${userMessage}</div>`;
+        const extractedText = await extractTextFromImage(image);
+
+        // ❌ Removed: showing extracted text
+        // chatBox.innerHTML += `<div class="message bot"><strong>Extracted Text:</strong> ${extractedText}</div>`;
+
+        rizzResponse = await rizzer(extractedText);
+        chatBox.innerHTML += `<div class="message bot"><strong>RizzApp:</strong> ${rizzResponse}</div>`;
+      } else {
+        chatBox.innerHTML += `<div class="message error">⚠️ Please enter text or upload an image.</div>`;
+        return;
+      }
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+      form.reset();
+    });
+  </script>
+</body>
+</html>
